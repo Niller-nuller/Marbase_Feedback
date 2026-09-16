@@ -30,6 +30,9 @@ public class MarsProtocol implements Runnable {
         try{
             while (running) {
             String line = reader.readLine();
+            if (line == null) {
+                break;
+            }
             System.out.println(line);
             String[] parts = line.split(":", 2);
             String key = parts[0];
@@ -40,7 +43,7 @@ public class MarsProtocol implements Runnable {
                 case "PSI" -> handlePressureValue(key, value);
                 case "CO2" -> handleCo2Value(key, value);
                 default -> sendMessage("No readable key value");
-            }
+                }
             }
         } catch (IOException e){
             throw new IOException("Failed to receive message");

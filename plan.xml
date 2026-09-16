@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan>
+  <title>Sensor resilience plan</title>
+  <summary>
+    The current sensor classes show a working demo but not a durable client. The main issue is that a socket failure or server shutdown kills the sensor thread. The next fix should focus on connection lifecycle, automatic retry, clean shutdown, and clearer protocol handling.
+  </summary>
+
+  <what_is_good>
+    <item>Each sensor is a separate runnable task, which is a good base for independent data generation.</item>
+    <item>The code is easy to read and the sensor types are easy to understand.</item>
+    <item>Using try-with-resources is a good direction for stream cleanup.</item>
+    <item>The sensor logic is simple enough to reason about for a small prototype.</item>
+  </what_is_good>
+
+  <what_needs_fixing>
+    <item>The sensor should not exit permanently when the server is unavailable; it should reconnect.</item>
+    <item>Socket reads should not rely on BufferedReader.ready(). It is not a reliable network signal.</item>
+    <item>There is no explicit shutdown path for threads.</item>
+    <item>Hardcoded host, port, delay, and ranges make the code harder to maintain and test.</item>
+    <item>Existing error handling prints a generic message but does not recover or retry.</item>
+  </what_needs_fixing>
+
+  <recommended_next_changes>
+    <step>
+      <name>Build a reconnect loop</name>
+      <description>
+        Instead of creating one socket and exiting on failure, the sensor should keep a running loop: connect, send data, handle failure, wait, reconnect.
+      </description>
+    </step>
+    <step>
+      <name>Introduce a stop flag</name>
+      <description>
+        Use an interruptable or volatile boolean to allow the thread to stop cleanly when the application ends.
+      </description>
+    </step>
+    <step>
+      <name>Add retry/backoff</name>
+      <description>
+        After a failed connection or timeout, wait a short time before retrying and increase the delay if the server stays down.
+      </description>
+    </step>
+    <step>
+      <name>Separate value generation from networking</name>
+      <description>
+        One component should generate the reading; another should manage the socket and retry policy.
+      </description>
+    </step>
+    <step>
+      <name>Define a clear message contract</name>
+      <description>
+        Decide on a stable payload format, such as name + value + delimiter, and make sure the server and client both understand it.
+      </description>
+    </step>
+  </recommended_next_changes>
+
+  <example_design>
+    <description>
+      Conceptual example only. This is not the project code; it is a model for the intended approach.
+    </description>
+    <java>
+      while (running) {
+          try {
+              Socket socket = new Socket(HOST, PORT);
+              sendReading(socket, buildReading());
+              socket.close();
+              Thread.sleep(2500);
+          } catch (IOException e) {
+              waitBeforeRetry();
+          } catch (InterruptedException e) {
+              running = false;
+          }
+      }
+    </java>
+  </example_design>
+
+  <example_stop_pattern>
+    <description>
+      Conceptual example of a shutdown pattern that avoids leaving threads stuck.
+    </description>
+    <java>
+      private volatile boolean running = true;
+
+      public void shutdown() {
+          running = false;
+      }
+
+      public void run() {
+          while (running) {
+              // reconnect + send + retry loop
+          }
+      }
+    </java>
+  </example_stop_pattern>
+
+  <risk_summary>
+    <item>Without reconnect logic, a server crash permanently kills the sensor client.</item>
+    <item>Without stop handling, shutdown becomes unreliable.</item>
+    <item>Without a proper protocol, it becomes difficult to distinguish valid data from malformed messages.</item>
+    <item>Without clear retry handling, the system can spin aggressively during downtime.</item>
+  </risk_summary>
+
+  <final_recommendation>
+    The next step is to turn the sensor into a self-healing client with reconnect + retry + clean shutdown logic. That solves the most important issue before any feature work or protocol cleanup is added.
+  </final_recommendation>
+</plan>
