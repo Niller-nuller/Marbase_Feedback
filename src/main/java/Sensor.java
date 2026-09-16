@@ -24,6 +24,7 @@ public class Sensor implements Runnable {
             System.out.println(sensorType + " Sensor is Starting Operation");
             while (true) {
                 Thread.sleep(2500);
+                //Står for at lave sensor data
                 switch (sensorType) {
                     case "TEMPERATURE":
                         int min = 0;
@@ -63,8 +64,9 @@ public class Sensor implements Runnable {
                             System.out.println(sensorType + " Sensor failure");
                             break;
                 }
-
+                //Den her thread.sleep og den over switch er for at simulerer tid mellem data indsamling
                 Thread.sleep(2500);
+                //Tjekker om der er kommet noget tilbage fra serveren og printer det ud
                 if(bufferedReader.ready()) {
                     System.out.println(bufferedReader.readLine());
                 }
@@ -79,6 +81,7 @@ public class Sensor implements Runnable {
     }
 
     private void sendInfo(PrintWriter printWriter, String sensorInfo, Socket socket) throws IOException {
+        //sender dataen til serveren
         printWriter.println(sensorInfo);
     }
 

@@ -1,13 +1,15 @@
 import java.io.IOException;
 
 public class SensorStarter {
-
+//starter sensorerne
     public static void main(String[] args) {
 
+            //Skaber diverse sensor der skal bruges
             Sensor temperatureSensor = new Sensor("TEMPERATURE");
             Sensor oxygenSenor = new Sensor("OXYGEN");
             Sensor pressureSensor = new Sensor("PRESSURE");
             Sensor co2Sensor = new Sensor("CO2");
+            //laver en thread til hver af sensorerne og starter dem
             Thread temperatureSensorThread = new Thread(temperatureSensor);
             temperatureSensorThread.start();
             Thread oxygenSensorThread = new Thread(oxygenSenor);

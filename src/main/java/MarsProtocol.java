@@ -15,7 +15,7 @@ public class MarsProtocol implements Runnable {
     }
 
     @Override
-    public void run() {
+    public void run() { //Bliver startet med Submit() fra MarsServer
         try(BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream())); ){
             writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
             receiveLoop(reader);
@@ -24,14 +24,14 @@ public class MarsProtocol implements Runnable {
             System.out.println(e.getMessage());
         }
     }
-
+//Er vores main loop for protocol
     private void receiveLoop(BufferedReader reader) throws IOException {
         boolean running = true;
         try{
-            while (running) {
+            while (running) { //En svaghed er at loopet aldrig ordenligt lukker, i stedet slutter det når en execoption bliver fanget.
             String line = reader.readLine();
             System.out.println(line);
-            String[] parts = line.split(":", 2);
+            String[] parts = line.split(":", 2); //Vi splitter vores besked for at finde ud af hvad er det vi skal håndtaggere.
             String key = parts[0];
             String value = parts[1];
             switch(key) {
@@ -45,7 +45,7 @@ public class MarsProtocol implements Runnable {
         } catch (IOException e){
             throw new IOException("Failed to receive message");
         }
-    }
+    } //4 metoder til at håndtaggere hver deres egen value.
     public void handleTemperatureValue(String key, String value) throws IOException {
         double numberValue = Double.parseDouble(value);
         if(numberValue < -15 || numberValue > 35){
@@ -53,7 +53,7 @@ public class MarsProtocol implements Runnable {
         }
         String dokument = getCurrentTime() + " " + key + ": " + value;
         System.out.println(dokument);
-        marsLogger.write(dokument);
+        marsLogger.write(dokument); //Her sender vi beskeden "dokument" til at blive skrevet ned i vores log mars.log
     }
     public void handleOxygenValue(String key, String value) throws IOException {
         int numberValue = Integer.parseInt(value);
@@ -82,10 +82,11 @@ public class MarsProtocol implements Runnable {
         System.out.println(dokument);
         marsLogger.write(dokument);
     }
-
+    //Metode til at skrive beskeder til vores Sensor.
     private void sendMessage(String message) {
         writer.println(message);
     }
+    //Til at få vores TimeStamp uden millisekunder.
     private String getCurrentTime(){
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

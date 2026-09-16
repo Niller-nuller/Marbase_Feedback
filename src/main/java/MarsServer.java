@@ -11,19 +11,19 @@ public class MarsServer {
     private final static int MAX_SENSORS = 5;
     private static ExecutorService executor;
 
-
+//Starter serveren
     public static void main(String[] args) {
         startServer();
     }
-
+    //Starter serveren og dens loop, main loopet venter og modtager nye connection og giver dem et Thread fra dens Thread Pool mens den forsætter sit loop.
     public static void startServer() {
             try (ServerSocket serverSocket = new ServerSocket(PORT);
                  FileWriter fileWriter = new FileWriter("src/mars.log", true);
                  MarsLogger marsLogger = new MarsLogger(fileWriter)) {
                 while (true) {
                     executor = Executors.newFixedThreadPool(MAX_SENSORS);
-                    Socket socket = serverSocket.accept();
-                    System.out.println("New Sensor connected");
+                    Socket socket = serverSocket.accept(); //Venter på client/sensor forbindelser.
+                    System.out.println("New Sensor connected"); //Feedback på at en ny connection er startet.
                     executor.submit(new MarsProtocol(socket, marsLogger));
 
                 }
